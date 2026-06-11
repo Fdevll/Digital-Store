@@ -98,3 +98,5 @@ AUTH_USER_MODEL = 'auth.User'
 
 import datetime
 DOWNLOAD_LINK_DAYS = 30
+
+ALLOWED_HOSTS = ['digital-store-awwa.onrender.com', 'localhost', '127.0.0.1']
