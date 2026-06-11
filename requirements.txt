@@ -1,0 +1,5 @@
+django>=4.2,<5.0
+pillow
+django-crispy-forms
+crispy-bootstrap4
+python-dotenv

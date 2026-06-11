@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1 class="mb-4">Резултаты поиска: "{{ query }}"</h1>
+
+<div class="row">
+    {% for product in products %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <img src="{{ product.preview_image.url }}" class="card-img-top" alt="{{ product.title }}" style="height: 200px; object-fit: cover;">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">{{ product.title }}</h5>
+                    <p class="card-text flex-grow-1">{{ product.description|truncatewords:15 }}</p>
+                    <p class="card-text"><strong>{{ product.price }} руб.</strong></p>
+                    <a href="{% url 'product_detail' product.slug %}" class="btn btn-primary">Подробнее</a>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <p>По вашему запросу ничего не найдено.</p>
+    {% endfor %}
+</div>
+
+<a href="{% url 'catalog' %}" class="btn btn-outline-secondary">Вернуться в каталог</a>
+{% endblock %}

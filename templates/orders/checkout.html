@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1 class="mb-4">Оформление заказа</h1>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">Контактные данные</div>
+            <div class="card-body">
+                <p><strong>Имя пользователя:</strong> {{ user.username }}</p>
+                <p><strong>Email:</strong> {{ user.email }}</p>
+                {% if user.profile.phone %}
+                    <p><strong>Телефон:</strong> {{ user.profile.phone }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary btn-lg w-100">Оплатить {{ cart.get_total_price }} руб.</button>
+        </form>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">Ваш заказ</div>
+            <ul class="list-group list-group-flush">
+                {% for item in cart %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>{{ item.product.title }} x {{ item.quantity }}</span>
+                        <span>{{ item.total_price }} руб.</span>
+                    </li>
+                {% endfor %}
+                <li class="list-group-item d-flex justify-content-between">
+                    <strong>Итого:</strong>
+                    <strong>{{ cart.get_total_price }} руб.</strong>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="px-4 py-5 my-5 text-center">
+    <h1 class="display-5 fw-bold">Цифровые товары для вашего творчества</h1>
+    <div class="col-lg-6 mx-auto">
+        <p class="lead mb-4">
+            Магазин цифровых товаров: курсы, шаблоны, графика, электронные книги.
+            Мгновенная доставка после оплаты.
+        </p>
+        <a href="{% url 'catalog' %}" class="btn btn-primary btn-lg px-4 gap-3">Перейти в каталог</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 text-center p-4">
+            <h3>Быстрая доставка</h3>
+            <p>Ссылка на скачивание сразу после оплаты</p>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 text-center p-4">
+            <h3>Безопасная оплата</h3>
+            <p>Поддержка банковских карт и электронных кошельков</p>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 text-center p-4">
+            <h3>Гарантия качества</h3>
+            <p>Все товары проходят проверку перед публикацией</p>
+        </div>
+    </div>
+</div>
+
+{% if categories %}
+<div class="mt-5">
+    <h2 class="mb-4">Категории</h2>
+    <div class="row">
+        {% for category in categories %}
+            <div class="col-md-3 mb-3">
+                <a href="{% url 'catalog' %}?category={{ category.slug }}" class="btn btn-outline-primary w-100">
+                    {{ category.name }}
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}
