@@ -23,25 +23,35 @@ function addToCart(productId) {
         },
         body: JSON.stringify({quantity: 1})
     })
-    .then(response => {
-        if (!response.ok) throw new Error('Network response was not ok');
+    .then(function (response) {
+        if (!response.ok) throw new Error('HTTP ' + response.status);
         return response.json();
     })
-    .then(data => {
-        const cartLink = document.querySelector('a[href*="cart"]');
-        if (cartLink) {
-            cartLink.innerHTML = 'Корзина (' + data.cart_count + ')';
+    .then(function (data) {
+        const counter = document.getElementById('cart-count');
+        if (counter) {
+            counter.textContent = data.cart_count > 0 ? '(' + data.cart_count + ')' : '';
         }
         showToast('Товар добавлен в корзину');
     })
-    .catch(err => console.error('Error adding to cart:', err));
+    .catch(function () {
+        showToast('Не удалось добавить товар');
+    });
 }
 
 function showToast(message) {
+    const existing = document.querySelector('.toast-note');
+    if (existing) existing.remove();
+
     const toast = document.createElement('div');
-    toast.className = 'alert alert-success alert-dismissible fade show position-fixed bottom-0 end-0 m-3';
-    toast.style.zIndex = '1050';
-    toast.innerHTML = message + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+    toast.className = 'toast-note';
+    toast.textContent = message;
     document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
+    requestAnimationFrame(function () {
+        toast.classList.add('show');
+    });
+    setTimeout(function () {
+        toast.classList.remove('show');
+        setTimeout(function () { toast.remove(); }, 250);
+    }, 2500);
 }

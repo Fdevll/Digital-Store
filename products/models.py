@@ -1,4 +1,5 @@
 from django.db import models
+from django.urls import reverse
 from django.utils.text import slugify
 import uuid
 
@@ -87,4 +88,4 @@ class Product(models.Model):
         super().save(*args, **kwargs)
 
     def get_absolute_url(self):
-        return f'/{self.slug}/'
+        return reverse('product_detail', args=[self.slug])

@@ -1,23 +1,27 @@
 {% extends 'base.html' %}
 
+{% block title %}Мои файлы — DigitalStore{% endblock %}
+
 {% block content %}
-<h1 class="mb-4">Мои скачивания</h1>
+<h1 class="mb-4">Мои файлы</h1>
 
 {% if downloads %}
-<div class="list-group">
-    {% for dl in downloads %}
-    <div class="list-group-item d-flex justify-content-between align-items-center">
-        <div>
-            <h5 class="mb-1">{{ dl.product.title }}</h5>
-            <small class="text-muted">Доступно до {{ dl.expires_at|date:"d.m.Y H:i" }}</small>
-        </div>
-        <a href="{% url 'download_file' dl.download_token %}" class="btn btn-primary btn-sm">Скачать</a>
+    <div class="card">
+        <ul class="list-group list-group-flush">
+            {% for dl in downloads %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        {{ dl.product.title }}
+                        <div class="small text-muted">доступен до {{ dl.expires_at|date:"d.m.Y H:i" }}</div>
+                    </div>
+                    <a href="{% url 'download_file' dl.download_token %}" class="btn btn-sm btn-primary">Скачать</a>
+                </li>
+            {% endfor %}
+        </ul>
     </div>
-    {% endfor %}
-</div>
 {% else %}
-<div class="alert alert-info">Пока нет доступных файлов для скачивания.</div>
+    <p class="text-muted">Пока нет файлов, доступных для скачивания.</p>
 {% endif %}
 
-<a href="{% url 'profile' %}" class="btn btn-outline-secondary mt-3">Назад в профиль</a>
+<a href="{% url 'profile' %}" class="btn btn-outline-secondary mt-4">Назад в кабинет</a>
 {% endblock %}

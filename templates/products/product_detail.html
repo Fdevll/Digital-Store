@@ -1,43 +1,45 @@
 {% extends 'base.html' %}
 
+{% block title %}{{ product.title }} — DigitalStore{% endblock %}
+
 {% block content %}
-<div class="row">
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb small mb-0">
+        <li class="breadcrumb-item"><a href="{% url 'catalog' %}">Каталог</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'catalog' %}?category={{ product.category.slug }}">{{ product.category.name }}</a></li>
+        <li class="breadcrumb-item active">{{ product.title }}</li>
+    </ol>
+</nav>
+
+<div class="row gy-4">
     <div class="col-md-6">
         {% if product.preview_image %}
-            <img src="{{ product.preview_image.url }}" class="img-fluid rounded" alt="{{ product.title }}">
+            <img src="{{ product.preview_image.url }}" class="img-fluid rounded border" alt="{{ product.title }}">
         {% else %}
-            <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 300px;">
-                <span class="text-muted">Нет изображения</span>
-            </div>
+            <div class="product-thumb-empty rounded" style="height: 320px;">Без превью</div>
         {% endif %}
     </div>
     <div class="col-md-6">
         <h1>{{ product.title }}</h1>
-        <p class="lead">{{ product.description }}</p>
-        <h3 class="text-primary mb-4">{{ product.price }} руб.</h3>
-        <p class="text-muted">Категория: {{ product.category.name }}</p>
-        <button onclick="addToCart({{ product.id }})" class="btn btn-primary btn-lg">В корзину</button>
-        <a href="{% url 'catalog' %}" class="btn btn-outline-secondary btn-lg">Назад в каталог</a>
+        <p class="price fs-4 mb-3">{{ product.price }} ₽</p>
+        <p>{{ product.description|linebreaks }}</p>
+        <div class="d-flex gap-2 mt-4">
+            <button type="button" onclick="addToCart({{ product.id }})" class="btn btn-primary">Добавить в корзину</button>
+            <a href="{% url 'cart_detail' %}" class="btn btn-outline-secondary">Перейти в корзину</a>
+        </div>
     </div>
 </div>
 
 {% if related_products %}
-<div class="mt-5">
-    <h3>Похожие товары</h3>
-    <div class="row">
+<section class="mt-5">
+    <h2 class="mb-3">Из той же категории</h2>
+    <div class="row gy-4">
         {% for product in related_products %}
-            <div class="col-md-3 mb-3">
-                <div class="card h-100">
-                    <img src="{{ product.preview_image.url }}" class="card-img-top" alt="{{ product.title }}" style="height: 150px; object-fit: cover;">
-                    <div class="card-body">
-                        <h6 class="card-title">{{ product.title }}</h6>
-                        <p class="card-text"><strong>{{ product.price }} руб.</strong></p>
-                        <a href="{% url 'product_detail' product.slug %}" class="btn btn-sm btn-primary">Подробнее</a>
-                    </div>
-                </div>
+            <div class="col-sm-6 col-md-3">
+                {% include 'products/_product_card.html' %}
             </div>
         {% endfor %}
     </div>
-</div>
+</section>
 {% endif %}
 {% endblock %}

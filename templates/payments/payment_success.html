@@ -1,16 +1,19 @@
 {% extends 'base.html' %}
 
-{% block content %}
-<div class="text-center py-5">
-    <div class="mb-4">
-        <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="#28a745" class="bi bi-check-circle" viewBox="0 0 16 16">
-            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-            <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.06-1.06z"/>
-        </svg>
-    </div>
-    <h1 class="mb-3">Оплата прошла успешно!</h1>
-    <p class="lead mb-4">Номер заказа: <strong>#{{ order.id }}</strong></p>
+{% block title %}Оплата прошла — DigitalStore{% endblock %}
 
-    <a href="{% url 'profile' %}" class="btn btn-primary btn-lg">Перейти в личный кабинет</a>
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 text-center py-5">
+        <h1 class="mb-3">Оплата прошла успешно</h1>
+        <p class="text-muted mb-4">
+            Заказ №{{ order.id }} оплачен. Ссылки на скачивание доступны
+            в личном кабинете в течение 30 дней.
+        </p>
+        <div class="d-flex justify-content-center gap-2">
+            <a href="{% url 'order_complete' order.id %}" class="btn btn-primary">Скачать файлы</a>
+            <a href="{% url 'profile' %}" class="btn btn-outline-secondary">В личный кабинет</a>
+        </div>
+    </div>
 </div>
 {% endblock %}

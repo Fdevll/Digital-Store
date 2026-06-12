@@ -1,40 +1,47 @@
 {% extends 'base.html' %}
 
+{% block title %}Оформление заказа — DigitalStore{% endblock %}
+
 {% block content %}
 <h1 class="mb-4">Оформление заказа</h1>
 
-<div class="row">
-    <div class="col-md-8">
+<div class="row gy-4">
+    <div class="col-md-7">
         <div class="card mb-4">
-            <div class="card-header">Контактные данные</div>
+            <div class="card-header">Покупатель</div>
             <div class="card-body">
-                <p><strong>Имя пользователя:</strong> {{ user.username }}</p>
-                <p><strong>Email:</strong> {{ user.email }}</p>
+                <p class="mb-1"><span class="text-muted">Логин:</span> {{ user.username }}</p>
+                <p class="mb-1"><span class="text-muted">Email:</span> {{ user.email|default:"не указан" }}</p>
                 {% if user.profile.phone %}
-                    <p><strong>Телефон:</strong> {{ user.profile.phone }}</p>
+                    <p class="mb-0"><span class="text-muted">Телефон:</span> {{ user.profile.phone }}</p>
                 {% endif %}
             </div>
         </div>
 
+        <p class="text-muted small">
+            После оплаты ссылки на скачивание появятся в личном кабинете
+            и будут действовать в течение 30 дней.
+        </p>
+
         <form method="post">
             {% csrf_token %}
-            <button type="submit" class="btn btn-primary btn-lg w-100">Оплатить {{ cart.get_total_price }} руб.</button>
+            <button type="submit" class="btn btn-primary btn-lg w-100">Перейти к оплате — {{ cart.get_total_price }} ₽</button>
         </form>
     </div>
 
-    <div class="col-md-4">
+    <div class="col-md-5">
         <div class="card">
-            <div class="card-header">Ваш заказ</div>
+            <div class="card-header">Состав заказа</div>
             <ul class="list-group list-group-flush">
                 {% for item in cart %}
                     <li class="list-group-item d-flex justify-content-between">
-                        <span>{{ item.product.title }} x {{ item.quantity }}</span>
-                        <span>{{ item.total_price }} руб.</span>
+                        <span>{{ item.product.title }} × {{ item.quantity }}</span>
+                        <span class="price">{{ item.total_price }} ₽</span>
                     </li>
                 {% endfor %}
-                <li class="list-group-item d-flex justify-content-between">
-                    <strong>Итого:</strong>
-                    <strong>{{ cart.get_total_price }} руб.</strong>
+                <li class="list-group-item d-flex justify-content-between fw-semibold">
+                    <span>Итого</span>
+                    <span class="price">{{ cart.get_total_price }} ₽</span>
                 </li>
             </ul>
         </div>
