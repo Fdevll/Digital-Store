@@ -10,6 +10,7 @@ urlpatterns = [
     path('users/', include('users.urls')),
     path('payments/', include('payments.urls')),
     path('sellers/', include('sellers.urls')),
+    path('support/', include('support.urls')),
     # Медиафайлы (превью товаров) отдаёт Django и в продакшене:
     # проект рассчитан на один сервер без отдельного файлового хранилища
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),

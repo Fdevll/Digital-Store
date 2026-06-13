@@ -40,6 +40,7 @@
                                     <li><a class="dropdown-item" href="{% url 'profile' %}">Личный кабинет</a></li>
                                     <li><a class="dropdown-item" href="{% url 'order_history' %}">История заказов</a></li>
                                     <li><a class="dropdown-item" href="{% url 'downloads_list' %}">Мои файлы</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'support' %}">Поддержка</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                     {% if user.seller %}
                                         <li><a class="dropdown-item" href="{% url 'seller_dashboard' %}">Кабинет продавца</a></li>
@@ -86,8 +87,9 @@
     </main>
 
     <footer class="site-footer py-4">
-        <div class="container d-flex flex-wrap justify-content-between">
+        <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
             <span>© {% now "Y" %} DigitalStore</span>
+            <a href="{% url 'support' %}" class="footer-link">Поддержка</a>
             <span>Цифровые товары с мгновенной доставкой</span>
         </div>
     </footer>

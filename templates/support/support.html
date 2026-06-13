@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Поддержка — DigitalStore{% endblock %}
+
+{% block content %}
+<div class="row gy-4">
+    <div class="col-md-6">
+        <h1 class="mb-3">Поддержка</h1>
+        <p class="text-muted">Возникла проблема или есть вопрос? Опишите его — мы ответим.</p>
+        <form method="post">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <button type="submit" class="btn btn-primary">Отправить обращение</button>
+        </form>
+    </div>
+
+    {% if tickets %}
+    <div class="col-md-6">
+        <h2 class="h4 mb-3">Мои обращения</h2>
+        <div class="accordion" id="ticketsAccordion">
+            {% for ticket in tickets %}
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#ticket{{ ticket.id }}">
+                        {{ ticket.subject }}
+                        <span class="badge bg-secondary ms-2">{{ ticket.get_status_display }}</span>
+                    </button>
+                </h2>
+                <div id="ticket{{ ticket.id }}" class="accordion-collapse collapse"
+                     data-bs-parent="#ticketsAccordion">
+                    <div class="accordion-body">
+                        <p class="text-muted small mb-1">{{ ticket.created_at|date:"d.m.Y H:i" }}</p>
+                        <p>{{ ticket.message|linebreaks }}</p>
+                        {% if ticket.answer %}
+                            <hr>
+                            <p class="mb-1"><strong>Ответ поддержки:</strong></p>
+                            <p class="mb-0">{{ ticket.answer|linebreaks }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

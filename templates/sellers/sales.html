@@ -13,6 +13,34 @@
     <span class="price fs-4">{{ total }} ₽</span>
 </div></div>
 
+{% if report_months %}
+<div class="card mb-4">
+    <div class="card-header">Выручка по месяцам</div>
+    <div class="card-body">
+        <canvas id="salesChart" height="100"></canvas>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header">Отчёт в Excel</div>
+    <div class="card-body">
+        <form method="get" action="{% url 'seller_report' %}" class="row g-2 align-items-end">
+            <div class="col-sm-auto">
+                <label class="form-label" for="report-month">Месяц</label>
+                <select id="report-month" name="month" class="form-select">
+                    {% for m in report_months %}
+                        <option value="{{ m.value }}">{{ m.label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-sm-auto">
+                <button type="submit" class="btn btn-success">Скачать .xlsx</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
 <div class="card">
     <div class="card-header">История продаж</div>
     {% if items %}
@@ -39,4 +67,29 @@
         <div class="card-body"><p class="mb-0 text-muted">Продаж пока не было.</p></div>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+{% if report_months %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+    new Chart(document.getElementById('salesChart'), {
+        type: 'bar',
+        data: {
+            labels: {{ chart_labels|safe }},
+            datasets: [{
+                label: 'Выручка, ₽',
+                data: {{ chart_values|safe }},
+                backgroundColor: 'rgba(13, 110, 253, 0.6)',
+                borderColor: 'rgba(13, 110, 253, 1)',
+                borderWidth: 1,
+            }]
+        },
+        options: {
+            scales: { y: { beginAtZero: true } },
+            plugins: { legend: { display: false } }
+        }
+    });
+</script>
+{% endif %}
 {% endblock %}
