@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Продажи — DigitalStore{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <h1 class="mb-0">Продажи</h1>
+    <a href="{% url 'seller_dashboard' %}" class="btn btn-outline-secondary btn-sm">Назад в кабинет</a>
+</div>
+
+<div class="card mb-4"><div class="card-body d-flex justify-content-between align-items-center">
+    <span class="text-muted">Итого выручка</span>
+    <span class="price fs-4">{{ total }} ₽</span>
+</div></div>
+
+<div class="card">
+    <div class="card-header">История продаж</div>
+    {% if items %}
+        <div class="table-responsive">
+            <table class="table mb-0 align-middle">
+                <thead>
+                    <tr><th>Дата</th><th>Заказ</th><th>Товар</th><th>Покупатель</th><th>Кол-во</th><th>Сумма</th></tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                        <tr>
+                            <td>{{ item.order.created_at|date:"d.m.Y" }}</td>
+                            <td>№{{ item.order.id }}</td>
+                            <td>{{ item.product.title }}</td>
+                            <td>{{ item.order.user.username }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td class="price">{{ item.total }} ₽</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="card-body"><p class="mb-0 text-muted">Продаж пока не было.</p></div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -21,6 +21,11 @@
     </div>
     <div class="col-md-6">
         <h1>{{ product.title }}</h1>
+        {% if product.seller %}
+            <p class="mb-2 text-muted">Продавец:
+                <a href="{{ product.seller.get_absolute_url }}">{{ product.seller.shop_name }}</a>
+            </p>
+        {% endif %}
         <p class="price fs-4 mb-3">{{ product.price }} ₽</p>
         <p>{{ product.description|linebreaks }}</p>
         <div class="d-flex gap-2 mt-4">

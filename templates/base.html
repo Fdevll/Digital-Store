@@ -40,6 +40,12 @@
                                     <li><a class="dropdown-item" href="{% url 'profile' %}">Личный кабинет</a></li>
                                     <li><a class="dropdown-item" href="{% url 'order_history' %}">История заказов</a></li>
                                     <li><a class="dropdown-item" href="{% url 'downloads_list' %}">Мои файлы</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    {% if user.seller %}
+                                        <li><a class="dropdown-item" href="{% url 'seller_dashboard' %}">Кабинет продавца</a></li>
+                                    {% else %}
+                                        <li><a class="dropdown-item" href="{% url 'become_seller' %}">Стать продавцом</a></li>
+                                    {% endif %}
                                     {% if user.is_staff %}
                                         <li><hr class="dropdown-divider"></li>
                                         <li><a class="dropdown-item" href="{% url 'admin:index' %}">Администрирование</a></li>

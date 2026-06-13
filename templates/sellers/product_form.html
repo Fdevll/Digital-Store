@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }} — DigitalStore{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7">
+        <h1 class="mb-4">{{ title }}</h1>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <button type="submit" class="btn btn-primary w-100">Сохранить</button>
+        </form>
+        <a href="{% url 'seller_dashboard' %}" class="btn btn-outline-secondary w-100 mt-2">Назад в кабинет</a>
+    </div>
+</div>
+{% endblock %}
