@@ -1,23 +1,56 @@
 """Заполняет базу демонстрационными данными для защиты:
-два магазина-продавца, привязка товаров, оплаченные заказы за последние месяцы
-и пример обращения в поддержку. Команду можно запускать повторно —
-прежние демо-данные пересоздаются.
+категории, демо-товары, два магазина-продавца, оплаченные заказы за последние
+месяцы и пример обращения в поддержку. Команда самодостаточна и идемпотентна —
+прежние демо-данные пересоздаются, поэтому её можно запускать повторно
+(в том числе вешать в Start Command на Render).
 
     python manage.py seed_demo
 """
 from datetime import timedelta
+from decimal import Decimal
 
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.utils import timezone
 
-from products.models import Product
+from products.models import Product, Category
 from sellers.models import Seller
 from orders.models import Order, OrderItem, Download
 from support.models import SupportTicket
 
 DEMO_PASSWORD = 'demo12345'
+
+# Демо-товары помечаем фиксированными slug с префиксом, чтобы при повторном
+# запуске находить и удалять именно их, не задевая реальные товары.
+DEMO_SLUG_PREFIX = 'demo-'
+
+CATEGORIES = [
+    ('Курсы', 'Онлайн-курсы и видеоуроки.'),
+    ('Электронные книги', 'Книги и руководства в электронном виде.'),
+    ('Графика', 'Иконки, пресеты и графические наборы.'),
+    ('Шаблоны', 'Готовые шаблоны для сайтов.'),
+]
+
+# (slug, title, category, price, description)
+PRODUCTS = [
+    ('demo-python-course', 'Python с нуля до профи', 'Курсы', '4990.00',
+     'Полный видеокурс по Python: синтаксис, ООП, работа с базами данных и практические проекты.'),
+    ('demo-django-course', 'Django: создание веб-приложений', 'Курсы', '5990.00',
+     'Пошаговый курс по разработке сайтов на Django с развёртыванием на сервере.'),
+    ('demo-clean-code-book', 'Чистый код на практике', 'Электронные книги', '1290.00',
+     'Электронная книга о принципах написания понятного и поддерживаемого кода.'),
+    ('demo-algorithms-book', 'Алгоритмы и структуры данных', 'Электронные книги', '1590.00',
+     'Разбор классических алгоритмов с примерами на Python и задачами для самопроверки.'),
+    ('demo-flat-icons', 'Набор иконок Flat UI (500 шт.)', 'Графика', '990.00',
+     'Векторный набор из 500 иконок в едином плоском стиле, форматы SVG и PNG.'),
+    ('demo-lightroom-presets', 'Пресеты для Lightroom «Кино»', 'Графика', '790.00',
+     'Коллекция пресетов для кинематографичной цветокоррекции фотографий.'),
+    ('demo-landing-startup', 'Шаблон лендинга «Startup»', 'Шаблоны', '2490.00',
+     'Адаптивный одностраничный шаблон для стартапа на HTML и CSS.'),
+    ('demo-shop-template', 'HTML-шаблон интернет-магазина', 'Шаблоны', '3490.00',
+     'Готовый адаптивный шаблон витрины интернет-магазина с карточками товаров и корзиной.'),
+]
 
 SELLERS = [
     {
@@ -36,11 +69,14 @@ SELLERS = [
 
 
 class Command(BaseCommand):
-    help = 'Заполняет базу демо-данными (продавцы, продажи, поддержка).'
+    help = 'Заполняет базу демо-данными (категории, товары, продавцы, продажи, поддержка).'
 
     @transaction.atomic
     def handle(self, *args, **options):
         self._cleanup()
+
+        self._make_categories()
+        self._make_products()
 
         buyer = self._make_user('demo_buyer', email='buyer@example.com')
 
@@ -50,8 +86,9 @@ class Command(BaseCommand):
             seller = Seller.objects.create(
                 user=user, shop_name=cfg['shop_name'], description=cfg['description'],
             )
-            # Привязываем товары нужных категорий, ещё не занятые другим продавцом
+            # Привязываем демо-товары нужных категорий, ещё не занятые продавцом
             products = Product.objects.filter(
+                slug__startswith=DEMO_SLUG_PREFIX,
                 category__name__in=cfg['categories'], seller__isnull=True,
             )
             products.update(seller=seller)
@@ -67,13 +104,30 @@ class Command(BaseCommand):
         ))
 
     def _cleanup(self):
-        """Удаляет данные предыдущего запуска, освобождая товары."""
+        """Удаляет данные предыдущего запуска: демо-товары, продавцов и покупателя."""
         demo_users = User.objects.filter(
             username__in=['demo_coder', 'demo_pixel', 'demo_buyer']
         )
-        Product.objects.filter(seller__user__in=demo_users).update(seller=None)
-        # Заказы и обращения демо-покупателя удалятся каскадно вместе с пользователем
+        # Заказы, OrderItem, Download и обращения демо-покупателя удалятся каскадно
         demo_users.delete()
+        # Сами демо-товары (их seller обнулился при удалении продавцов)
+        Product.objects.filter(slug__startswith=DEMO_SLUG_PREFIX).delete()
+
+    def _make_categories(self):
+        for name, description in CATEGORIES:
+            Category.objects.get_or_create(
+                name=name,
+                defaults={'slug': self._slugify(name), 'description': description},
+            )
+
+    def _make_products(self):
+        for slug, title, category_name, price, description in PRODUCTS:
+            category = Category.objects.get(name=category_name)
+            # slug задаём явно, чтобы save() не генерировал новый и cleanup их находил
+            Product.objects.create(
+                slug=slug, title=title, description=description,
+                price=Decimal(price), category=category, is_active=True,
+            )
 
     def _make_user(self, username, email):
         user = User.objects.create_user(username, email, DEMO_PASSWORD)
@@ -122,3 +176,9 @@ class Command(BaseCommand):
             answer='Ссылка появляется в разделе «Мои файлы» сразу после подтверждения оплаты. '
                    'Проверьте, пожалуйста, статус заказа — он должен быть «Оплачен».',
         )
+
+    @staticmethod
+    def _slugify(name):
+        from products.models import transliterate_cyrillic
+        from django.utils.text import slugify
+        return slugify(transliterate_cyrillic(name))
