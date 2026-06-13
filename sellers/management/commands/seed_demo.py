@@ -1,14 +1,18 @@
 """Заполняет базу демонстрационными данными для защиты:
-категории, демо-товары, два магазина-продавца, оплаченные заказы за последние
-месяцы и пример обращения в поддержку. Команда самодостаточна и идемпотентна —
-прежние демо-данные пересоздаются, поэтому её можно запускать повторно
-(в том числе вешать в Start Command на Render).
+категории, демо-товары (с реальными обложками и файлами из репозитория),
+два магазина-продавца, оплаченные заказы за последние месяцы и пример обращения
+в поддержку. Команда самодостаточна и идемпотентна — прежние демо-данные
+пересоздаются, поэтому её можно запускать повторно (в том числе в Build/Start
+Command на Render, где диск эфемерный и media пересобирается при каждом деплое).
 
     python manage.py seed_demo
 """
 from datetime import timedelta
 from decimal import Decimal
+from pathlib import Path
 
+from django.conf import settings
+from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -21,9 +25,9 @@ from support.models import SupportTicket
 
 DEMO_PASSWORD = 'demo12345'
 
-# Демо-товары помечаем фиксированными slug с префиксом, чтобы при повторном
-# запуске находить и удалять именно их, не задевая реальные товары.
-DEMO_SLUG_PREFIX = 'demo-'
+# Обложки и файлы товаров хранятся в репозитории, чтобы переживать эфемерный
+# сброс media на Render: при seed они копируются в MEDIA_ROOT.
+DEMO_ASSETS_DIR = settings.BASE_DIR / 'assets' / 'demo'
 
 CATEGORIES = [
     ('Курсы', 'Онлайн-курсы и видеоуроки.'),
@@ -32,25 +36,53 @@ CATEGORIES = [
     ('Шаблоны', 'Готовые шаблоны для сайтов.'),
 ]
 
-# (slug, title, category, price, description)
+# (slug, title, category, price, image, file, description)
+# image/file — имена в assets/demo/previews и assets/demo/files
 PRODUCTS = [
-    ('demo-python-course', 'Python с нуля до профи', 'Курсы', '4990.00',
-     'Полный видеокурс по Python: синтаксис, ООП, работа с базами данных и практические проекты.'),
-    ('demo-django-course', 'Django: создание веб-приложений', 'Курсы', '5990.00',
-     'Пошаговый курс по разработке сайтов на Django с развёртыванием на сервере.'),
-    ('demo-clean-code-book', 'Чистый код на практике', 'Электронные книги', '1290.00',
-     'Электронная книга о принципах написания понятного и поддерживаемого кода.'),
-    ('demo-algorithms-book', 'Алгоритмы и структуры данных', 'Электронные книги', '1590.00',
-     'Разбор классических алгоритмов с примерами на Python и задачами для самопроверки.'),
-    ('demo-flat-icons', 'Набор иконок Flat UI (500 шт.)', 'Графика', '990.00',
-     'Векторный набор из 500 иконок в едином плоском стиле, форматы SVG и PNG.'),
-    ('demo-lightroom-presets', 'Пресеты для Lightroom «Кино»', 'Графика', '790.00',
-     'Коллекция пресетов для кинематографичной цветокоррекции фотографий.'),
-    ('demo-landing-startup', 'Шаблон лендинга «Startup»', 'Шаблоны', '2490.00',
-     'Адаптивный одностраничный шаблон для стартапа на HTML и CSS.'),
-    ('demo-shop-template', 'HTML-шаблон интернет-магазина', 'Шаблоны', '3490.00',
-     'Готовый адаптивный шаблон витрины интернет-магазина с карточками товаров и корзиной.'),
+    ('nabor-ikonok-dlya-interfeysa', 'Набор иконок для интерфейса', 'Графика', '490.00',
+     'nabor-ikonok-dlya-interfeysa.jpg', 'icons-pack.zip',
+     'Более 200 иконок в формате PNG: навигация, действия, статусы. Единый стиль линий, '
+     'прозрачный фон, размер 128 пикселей. Подходит для веб-приложений и презентаций.'),
+    ('django', 'Курс по Django для начинающих', 'Курсы', '2490.00',
+     'django.jpg', 'django-course.zip',
+     'Полный видеокурс по разработке на Django. 20 часов материала: модели, представления, '
+     'шаблоны, формы, авторизация и деплой готового проекта на сервер.'),
+    ('startup', 'Шаблон лендинга Startup', 'Шаблоны', '1200.00',
+     'startup.jpg', 'landing-startup.zip',
+     'Современный шаблон лендинга на HTML и CSS: hero-блок, преимущества, контакты. '
+     'Адаптивная вёрстка, без зависимостей — просто откройте index.html и замените тексты.'),
+    ('python', 'Электронная книга Python для всех', 'Электронные книги', '590.00',
+     'python.jpg', 'python-dlya-vseh.pdf',
+     'Подробное руководство по Python для новичков: от установки до первых проектов. '
+     'Понятные примеры, упражнения после каждой главы. PDF, 300 страниц.'),
+    ('videokurs-po-javascript-s-nulya', 'Видеокурс по JavaScript с нуля', 'Курсы', '1990.00',
+     'videokurs-po-javascript-s-nulya.jpg', 'javascript-course.zip',
+     'Современный JavaScript для новичков: синтаксис, работа с DOM, события, асинхронность '
+     'и итоговый проект — интерактивное веб-приложение без фреймворков.'),
+    ('python-dlya-analiza-dannyh', 'Python для анализа данных', 'Курсы', '2890.00',
+     'python-dlya-analiza-dannyh.jpg', 'python-data-course.zip',
+     'Практический курс: pandas, NumPy и matplotlib. Учимся загружать, чистить и '
+     'визуализировать данные, строим отчёты на реальных датасетах.'),
+    ('chistyy-kod-na-praktike', 'Чистый код на практике', 'Электронные книги', '790.00',
+     'chistyy-kod-na-praktike.jpg', 'chistyj-kod.pdf',
+     'Как писать понятный и поддерживаемый код: именование, функции, комментарии, '
+     'рефакторинг. Примеры «до и после» на Python и JavaScript. PDF, 180 страниц.'),
+    ('osnovy-sql-i-baz-dannyh', 'Основы SQL и баз данных', 'Электронные книги', '650.00',
+     'osnovy-sql-i-baz-dannyh.jpg', 'osnovy-sql.pdf',
+     'Реляционные базы данных простым языком: SELECT, JOIN, группировки, индексы и '
+     'проектирование схемы. Все примеры можно выполнять в бесплатной SQLite. PDF, 220 страниц.'),
+    ('kollektsiya-fonov-dlya-prezentatsiy', 'Коллекция фонов для презентаций', 'Графика', '390.00',
+     'kollektsiya-fonov-dlya-prezentatsiy.jpg', 'backgrounds.zip',
+     'Набор градиентных фонов в разрешении 1280×720 для слайдов, обложек и баннеров. '
+     'Спокойные цвета, не отвлекают от содержания.'),
+    ('shablon-rezyume-i-portfolio', 'Шаблон резюме и портфолио', 'Шаблоны', '350.00',
+     'shablon-rezyume-i-portfolio.jpg', 'resume-template.zip',
+     'Одностраничный HTML-шаблон резюме: блоки опыта, навыков и контактов. Печатается на A4 '
+     'без потери вёрстки, легко превращается в PDF через браузер.'),
 ]
+
+# Все slug демо-товаров — для идемпотентной очистки прошлого запуска
+DEMO_SLUGS = [p[0] for p in PRODUCTS]
 
 SELLERS = [
     {
@@ -88,7 +120,7 @@ class Command(BaseCommand):
             )
             # Привязываем демо-товары нужных категорий, ещё не занятые продавцом
             products = Product.objects.filter(
-                slug__startswith=DEMO_SLUG_PREFIX,
+                slug__in=DEMO_SLUGS,
                 category__name__in=cfg['categories'], seller__isnull=True,
             )
             products.update(seller=seller)
@@ -104,14 +136,26 @@ class Command(BaseCommand):
         ))
 
     def _cleanup(self):
-        """Удаляет данные предыдущего запуска: демо-товары, продавцов и покупателя."""
+        """Удаляет данные предыдущего запуска: демо-товары, продавцов, покупателя и их файлы."""
         demo_users = User.objects.filter(
             username__in=['demo_coder', 'demo_pixel', 'demo_buyer']
         )
         # Заказы, OrderItem, Download и обращения демо-покупателя удалятся каскадно
         demo_users.delete()
-        # Сами демо-товары (их seller обнулился при удалении продавцов)
-        Product.objects.filter(slug__startswith=DEMO_SLUG_PREFIX).delete()
+        # Демо-товары (текущие и из прежних версий команды с префиксом demo-)
+        Product.objects.filter(slug__in=DEMO_SLUGS).delete()
+        Product.objects.filter(slug__startswith='demo-').delete()
+        # Их файлы в media, чтобы при повторном запуске не плодились копии
+        previews = settings.MEDIA_ROOT / 'products' / 'previews'
+        files = settings.MEDIA_ROOT / 'products' / 'files'
+        for slug in DEMO_SLUGS:
+            for directory in (previews, files):
+                if directory.exists():
+                    for old in directory.glob(f'{slug}.*'):
+                        old.unlink()
+        if previews.exists():
+            for old in previews.glob('demo-*.png'):
+                old.unlink()
 
     def _make_categories(self):
         for name, description in CATEGORIES:
@@ -121,13 +165,27 @@ class Command(BaseCommand):
             )
 
     def _make_products(self):
-        for slug, title, category_name, price, description in PRODUCTS:
+        for slug, title, category_name, price, image, file_name, description in PRODUCTS:
             category = Category.objects.get(name=category_name)
             # slug задаём явно, чтобы save() не генерировал новый и cleanup их находил
-            Product.objects.create(
+            product = Product.objects.create(
                 slug=slug, title=title, description=description,
                 price=Decimal(price), category=category, is_active=True,
             )
+            # Обложка и файл копируются из репозитория в media под именем по slug
+            self._attach_file(product.preview_image, DEMO_ASSETS_DIR / 'previews' / image,
+                              f'{slug}{Path(image).suffix}')
+            self._attach_file(product.digital_file, DEMO_ASSETS_DIR / 'files' / file_name,
+                              f'{slug}{Path(file_name).suffix}')
+            product.save()
+
+    @staticmethod
+    def _attach_file(field, source_path, dest_name):
+        """Копирует файл из assets в media-поле (если исходник на месте)."""
+        if not source_path.exists():
+            return
+        with open(source_path, 'rb') as src:
+            field.save(dest_name, ContentFile(src.read()), save=False)
 
     def _make_user(self, username, email):
         user = User.objects.create_user(username, email, DEMO_PASSWORD)
