@@ -7,6 +7,13 @@ from .models import Profile
 
 class RegisterForm(UserCreationForm):
     email = forms.EmailField(required=True, label='Email')
+    agreement = forms.BooleanField(
+        required=True,
+        label='Я принимаю условия пользовательского соглашения',
+        error_messages={
+            'required': 'Необходимо принять условия пользовательского соглашения.',
+        },
+    )
 
     class Meta:
         model = User
